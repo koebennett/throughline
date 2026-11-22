@@ -12,7 +12,9 @@ let win = null;
 
 if (!app.requestSingleInstanceLock()) app.quit();
 app.on("second-instance", () => {
-  if (win) (win.isMinimized() && win.restore(), win.focus());
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.focus();
 });
 
 async function boot() {
@@ -108,7 +110,10 @@ function watchApprovals() {
       if (seen.has(r.id)) continue;
       seen.add(r.id);
       const n = new Notification({ title: "Throughline needs your approval", body: `${r.task.replace(/_/g, " ")} is waiting for your decision.` });
-      n.on("click", () => (win?.show(), win?.loadURL(`${server.url}/agent?run=${r.id}`)));
+      n.on("click", () => {
+        win?.show();
+        win?.loadURL(`${server.url}/agent?run=${r.id}`);
+      });
       n.show();
     }
   }, 5000).unref();
