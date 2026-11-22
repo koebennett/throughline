@@ -19,17 +19,35 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      - name: Build portable .exe and NSIS installer
+      - name: Build zip, portable .exe and installer
         run: npm run dist:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Launch the packaged app on Windows and verify the UI renders
+        shell: pwsh
+        run: |
+          $shot = "$env:RUNNER_TEMP\smoke.png"
+          $env:THROUGHLINE_SMOKE_SHOT = $shot
+          $p = Start-Process -FilePath "release\win-unpacked\Throughline.exe" -PassThru
+          if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "App did not finish the smoke test within 120s" }
+          Get-Content "$env:APPDATA\Throughline\startup.log" -ErrorAction SilentlyContinue
+          Get-Content "$shot.json"
+          if ($p.ExitCode -ne 0) { throw "Smoke test failed with exit code $($p.ExitCode)" }
+          $r = Get-Content "$shot.json" | ConvertFrom-Json
+          if (-not $r.hasApp) { throw "Window rendered without the Throughline UI" }
+          Copy-Item $shot release\windows-smoke.png
       - uses: actions/upload-artifact@v4
         with:
           name: Throughline-Windows
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/*.zip
+            release/windows-smoke.png
           if-no-files-found: error
       - name: Attach to GitHub release (tags only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: release/*.exe
+          files: |
+            release/*.exe
+            release/*.zip

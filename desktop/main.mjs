@@ -1,7 +1,7 @@
 // Throughline for Windows (and macOS/Linux): an Electron shell around the same local server.
 // The API binds to 127.0.0.1 on a random free port; data lives in the user's AppData folder.
 import { app, BrowserWindow, Menu, shell, dialog, Notification } from "electron";
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -56,6 +56,8 @@ function createWindow(url) {
       if (/^https?:\/\//i.test(target)) shell.openExternal(target);
     }
   });
+  win.webContents.on("did-fail-load", (_e, code, desc, failedUrl) => logLine(`did-fail-load ${code} ${desc} ${failedUrl}`));
+  win.webContents.on("render-process-gone", (_e, d) => logLine(`renderer gone: ${d.reason}`));
   win.loadURL(url);
   buildMenu();
   // Automated smoke test: THROUGHLINE_SMOKE_SHOT=<png path> captures the loaded window and exits.
@@ -124,13 +126,29 @@ function watchApprovals() {
   }, 5000).unref();
 }
 
+// Startup log so any failure on a user's PC leaves a readable reason (%APPDATA%\Throughline\startup.log).
+function logLine(msg) {
+  try {
+    const dir = app.getPath("userData");
+    mkdirSync(dir, { recursive: true });
+    appendFileSync(join(dir, "startup.log"), `[${new Date().toISOString()}] ${msg}\n`);
+  } catch {
+    /* logging must never crash the app */
+  }
+}
+process.on("uncaughtException", (e) => logLine(`uncaughtException: ${e?.stack ?? e}`));
+process.on("unhandledRejection", (e) => logLine(`unhandledRejection: ${e?.stack ?? e}`));
+
 app.whenReady().then(async () => {
+  logLine(`starting Throughline ${app.getVersion()} on ${process.platform} ${process.arch}, electron ${process.versions.electron}, node ${process.versions.node}, packaged=${app.isPackaged}`);
   try {
     await boot();
+    logLine(`server ready at ${server.url}`);
     watchApprovals();
   } catch (e) {
-    dialog.showErrorBox("Throughline could not start", String(e?.stack ?? e));
-    app.quit();
+    logLine(`startup failed: ${e?.stack ?? e}`);
+    dialog.showErrorBox("Throughline could not start", `${String(e?.message ?? e)}\n\nDetails were saved to:\n${join(app.getPath("userData"), "startup.log")}`);
+    app.exit(1);
   }
 });
 app.on("window-all-closed", () => app.quit());

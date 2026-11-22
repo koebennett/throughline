@@ -25,9 +25,9 @@
     "check:secrets": "node scripts/check-secrets.mjs",
     "e2e:install": "playwright install chromium",
     "desktop": "npm run build && electron .",
-    "dist:win": "npm run build && electron-builder --win --x64",
-    "dist:dir": "npm run build && electron-builder --dir",
-    "dist:win-portable": "npm run build && electron-builder --win portable --x64",
+    "dist:win": "npm run build && electron-builder --win --x64 --publish never",
+    "dist:dir": "npm run build && electron-builder --dir --publish never",
+    "dist:win-portable": "npm run build && electron-builder --win portable --x64 --publish never",
     "mcp": "node dist/server/mcp/server.js"
   },
   "dependencies": {
@@ -78,6 +78,12 @@
     "win": {
       "target": [
         {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
           "target": "portable",
           "arch": [
             "x64"
@@ -90,7 +96,8 @@
           ]
         }
       ],
-      "icon": "desktop/icon.png"
+      "icon": "desktop/icon.png",
+      "artifactName": "Throughline-${version}-windows.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -117,6 +124,7 @@
     },
     "portable": {
       "artifactName": "Throughline-${version}-portable.exe"
-    }
+    },
+    "publish": null
   }
 }
