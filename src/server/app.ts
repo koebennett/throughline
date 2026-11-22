@@ -39,6 +39,7 @@ import { reviewVariant, directGenerate, draftText } from "./agent/review.js";
 import { profileSummary } from "./agent/context.js";
 import { system } from "./agent/prompts.js";
 import { seedDemo } from "./demo.js";
+import * as youtube from "./services/youtube.js";
 
 const ALLOWED_HOSTS = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
 
@@ -303,7 +304,7 @@ export function createApp(ctx: Ctx, engine: WorkflowEngine, opts: { allowAnyHost
   app.get("/api/analytics/template.csv", (c) => csv(c, "throughline-analytics-template.csv", analytics.csvTemplate()));
   app.post("/api/brands/:b/analytics/preview", async (c) => (brandOf(c), c.json(analytics.previewCsv((await json(c, z.object({ text: z.string().max(10_000_000) }))).text))));
   app.post("/api/brands/:b/analytics/import", async (c) => c.json(analytics.importCsv(db, brandOf(c), await json(c, z.object({ filename: z.string().max(200).default("import.csv"), text: z.string().max(10_000_000), platform: z.string(), account: z.string().max(200).optional(), mapping: z.record(z.string(), z.string()).optional() }))), 201));
-  app.get("/api/brands/:b/analytics", (c) => c.json(analytics.analyze(db, brandOf(c), { platform: c.req.query("platform") })));
+  app.get("/api/brands/:b/analytics", (c) => (youtube.enforceRetention(ctx), c.json(analytics.analyze(db, brandOf(c), { platform: c.req.query("platform") }))));
   app.get("/api/brands/:b/analytics/imports", (c) => c.json(analytics.listImports(db, brandOf(c))));
   app.delete("/api/analytics/imports/:id", (c) => (analytics.deleteImport(db, c.req.param("id")), c.json({ deleted: true })));
   app.get("/api/analytics/snapshots/:id/postmortem", (c) => c.json(analytics.postmortem(db, c.req.param("id"))));
@@ -363,8 +364,36 @@ export function createApp(ctx: Ctx, engine: WorkflowEngine, opts: { allowAnyHost
     const s = connector.status(ctx);
     return c.json({ ok: s.status === "connected" || s.status === "available", detail: s.detail });
   });
-  app.post("/api/integrations/:id/disconnect", (c) => {
+  // ---- YouTube read-only OAuth (PKCE, loopback redirect) ----
+  app.post("/api/integrations/youtube/client", async (c) => {
+    const b = await json(c, z.object({ clientId: z.string().min(10).max(300), clientSecret: z.string().max(300).default("") }));
+    youtube.saveClient(ctx, b.clientId, b.clientSecret);
+    return c.json(youtube.youtubeStatus(ctx));
+  });
+  app.post("/api/integrations/youtube/connect", async (c) => {
+    const b = await json(c, z.object({ brandId: z.string().nullable().default(null) }));
+    return c.json(youtube.startAuth(ctx, new URL(c.req.url).origin.replace("localhost", "127.0.0.1"), b.brandId));
+  });
+  // Top-level navigation from Google back to this machine (GET; protected by single-use state + PKCE).
+  app.get("/api/integrations/youtube/callback", async (c) => {
+    const err = c.req.query("error");
+    const page = (title: string, body: string) => c.html(`<!doctype html><meta charset="utf-8"><title>${title}</title><body style="font:15px system-ui;max-width:560px;margin:15vh auto;padding:0 16px"><h2>${title}</h2><p>${body}</p><p><a href="/settings">Back to Throughline</a></p></body>`);
+    if (err) return page("YouTube not connected", "You declined access (or Google returned an error). Nothing was stored.");
+    try {
+      const r = await youtube.completeAuth(ctx, c.req.query("code") ?? "", c.req.query("state") ?? "");
+      return page("YouTube connected", `Read-only analytics access granted for <b>${r.account.replace(/[<>&"]/g, "")}</b>. You can close this tab and return to Throughline.`);
+    } catch (e) {
+      return page("YouTube not connected", String((e as Error).message).replace(/[<>&"]/g, ""));
+    }
+  });
+  app.post("/api/brands/:b/integrations/youtube/sync", async (c) => {
+    const b = await json(c, z.object({ days: z.number().int().min(7).max(365).default(90) }));
+    return c.json(await youtube.syncAnalytics(ctx, brandOf(c), b.days));
+  });
+
+  app.post("/api/integrations/:id/disconnect", async (c) => {
     const id = c.req.param("id");
+    const yt = id === "youtube" ? await youtube.disconnectYoutube(ctx) : null;
     if (!getConnector(id)) throw notFound("Integration");
     ctx.secrets.delete(`${id}:api_key`);
     ctx.secrets.delete(id);
@@ -372,7 +401,7 @@ export function createApp(ctx: Ctx, engine: WorkflowEngine, opts: { allowAnyHost
     const removed = db.run("DELETE FROM analytics_imports WHERE source = ?", `api:${id}`).changes;
     db.run("INSERT INTO integrations (id, status, updated_at) VALUES (?, 'disconnected', ?) ON CONFLICT(id) DO UPDATE SET status = 'disconnected', updated_at = excluded.updated_at", id, new Date().toISOString());
     ctx.refreshModel();
-    audit(db, { entityType: "integration", entityId: id, action: "disconnected", detail: { removedApiImports: Number(removed), envKeyStillSet: id === "anthropic" && !!ctx.config.anthropicApiKey } });
+    audit(db, { entityType: "integration", entityId: id, action: "disconnected", detail: { youtube: yt, removedApiImports: Number(removed), envKeyStillSet: id === "anthropic" && !!ctx.config.anthropicApiKey } });
     return c.json({ disconnected: true, note: id === "anthropic" && ctx.config.anthropicApiKey ? "ANTHROPIC_API_KEY is still set in your environment; remove it from .env to fully disconnect." : undefined });
   });
   app.get("/api/settings", (c) => c.json(getSettings(db)));

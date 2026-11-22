@@ -2,6 +2,7 @@
 // Official docs were checked on the verifiedOn date; re-check before enabling any live write (docs/INTEGRATIONS.md).
 import type { Ctx } from "../context.js";
 import type { PlatformConnector } from "./types.js";
+import { youtubeStatus } from "../services/youtube.js";
 
 const VERIFIED = "2026-11-22";
 
@@ -39,22 +40,19 @@ const claudeSearch: PlatformConnector = {
 
 const youtube: PlatformConnector = {
   descriptor: {
-    id: "youtube", name: "YouTube (Data API v3 + Analytics API)", kind: "platform", platforms: ["youtube", "youtube_shorts"], capabilities: ["read_analytics", "publish"],
-    scopes: ["https://www.googleapis.com/auth/yt-analytics.readonly", "https://www.googleapis.com/auth/youtube.readonly", "https://www.googleapis.com/auth/youtube.upload (only if you enable uploads)"],
-    permissionExplanation: "Read-only analytics for your own channel; optional upload of your own video files with a privacy setting you choose. No engagement automation, no downloading audiovisual content. API data is refreshed/deleted per YouTube API Services policies (incl. 30-day limits and deletion on revoke).",
+    id: "youtube", name: "YouTube Analytics (read-only)", kind: "platform", platforms: ["youtube", "youtube_shorts"], capabilities: ["read_analytics"],
+    scopes: ["https://www.googleapis.com/auth/yt-analytics.readonly", "https://www.googleapis.com/auth/youtube.readonly"],
+    permissionExplanation: "Read-only access to your own channel's analytics and video titles. No uploads, no comments/likes/subscriptions, no downloading of video. Synced data is replaced on each sync and deleted after 30 days or when you disconnect (YouTube API Services policy).",
     setupSteps: [
-      "Create a Google Cloud project and enable YouTube Data API v3 and YouTube Analytics API",
-      "Configure the OAuth consent screen; add yourself as a test user",
-      "Create an OAuth client (Web), redirect URI http://127.0.0.1:8787/api/integrations/youtube/callback",
-      "Set YOUTUBE_OAUTH_CLIENT_ID / YOUTUBE_OAUTH_CLIENT_SECRET in .env",
-      "Until the OAuth flow ships in a later release, export CSVs from YouTube Studio → Analytics → Advanced mode and import them in Analytics",
+      "Google Cloud Console → create a project → enable “YouTube Analytics API” and “YouTube Data API v3”",
+      "OAuth consent screen → External → add yourself as a Test user (no Google review needed for your own use)",
+      "Credentials → Create OAuth client ID → Application type: Desktop app",
+      "Paste the client ID and client secret below (stored encrypted), then click Connect YouTube",
+      "Sync from Analytics Lab → “Sync YouTube”",
     ],
-    docsUrls: ["https://developers.google.com/youtube/analytics", "https://developers.google.com/youtube/v3/docs/videos/insert", "https://developers.google.com/youtube/terms/developer-policies"], verifiedOn: VERIFIED,
+    docsUrls: ["https://developers.google.com/youtube/analytics", "https://developers.google.com/identity/protocols/oauth2/native-app", "https://developers.google.com/youtube/terms/developer-policies"], verifiedOn: "2026-11-22 (endpoints not re-fetched — see docs/INTEGRATIONS.md)",
   },
-  status: (ctx) =>
-    ctx.config.youtubeClientId
-      ? { status: "not_implemented", detail: "OAuth client configured, but the OAuth + analytics sync flow is not built in this release. Use CSV import and manual hand-off." }
-      : { status: "needs_credentials", detail: "Needs a Google OAuth client. Meanwhile, CSV import and manual hand-off work fully." },
+  status: (ctx) => youtubeStatus(ctx),
 };
 
 const tiktok: PlatformConnector = {

@@ -142,6 +142,7 @@ function Import({ brandId, onDone }: { brandId: string; onDone: () => void }) {
           )}
         </div>
       </Card>
+      <YoutubeSyncCard brandId={brandId} />
       <Card title="Import history">
         <QueryView q={imports} empty={(d: any[]) => !d.length && <p className="muted">No imports yet.</p>}>
           {(list: any[]) => list.map((i) => (
@@ -190,6 +191,25 @@ function Experiments({ brandId }: { brandId: string }) {
           <Field label="Decision"><TextArea value={e.decision} onChange={(v) => setE({ ...e, decision: v })} rows={2} /></Field>
         </Modal>
       )}
+    </Card>
+  );
+}
+
+function YoutubeSyncCard({ brandId }: { brandId: string }) {
+  const integrations = useQuery({ queryKey: ["integrations"], queryFn: () => api.get("/integrations") });
+  const yt = integrations.data?.find((i: any) => i.id === "youtube");
+  const [days, setDays] = useState("90");
+  const sync = useAction(() => api.post(`/brands/${brandId}/integrations/youtube/sync`, { days: Number(days) }), { success: (r) => `Synced ${r.videos} video(s) (${r.window.start} → ${r.window.end})`, invalidate: [["analytics", brandId], ["imports", brandId], ["integrations"]] });
+  if (!yt) return null;
+  return (
+    <Card title="YouTube Analytics API">
+      {yt.status === "connected" ? (
+        <div className="stack">
+          <p className="small">{yt.detail}</p>
+          <div className="row"><Select value={days} onChange={setDays} options={["28", "90", "180", "365"].map((d) => ({ value: d, label: `Last ${d} days` }))} style={{ width: "auto" }} /><Button kind="primary" onClick={() => sync.mutate()} busy={sync.isPending}>Sync YouTube</Button></div>
+          <p className="faint">Last sync {fmtDate(yt.lastSyncAt, true)}. Each sync replaces the previous API import; API data is deleted after 30 days or on disconnect.</p>
+        </div>
+      ) : <p className="small muted">{yt.detail} <a href="/settings">Set up in Settings</a>.</p>}
     </Card>
   );
 }

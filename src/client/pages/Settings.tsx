@@ -44,6 +44,7 @@ function Integrations() {
               <p className="small">{i.detail}</p>
               <p className="small muted" style={{ marginTop: 6 }}>{i.permissionExplanation}</p>
               {i.scopes.length > 0 && <div className="faint" style={{ marginTop: 6 }}>Least-privilege scopes: {i.scopes.join(", ")}</div>}
+              {i.id === "youtube" && <YoutubeSetup status={i.status} />}
               {i.id === "anthropic" && i.status !== "connected" && (
                 <div className="row" style={{ marginTop: 10, flexWrap: "nowrap" }}>
                   <input type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-ant-… (verified, then stored encrypted on this machine)" aria-label="Anthropic API key" />
@@ -188,4 +189,26 @@ function AuditTab() {
       </QueryView>
     </Card>
   );
+}
+
+function YoutubeSetup({ status }: { status: string }) {
+  const { brandId } = useBrand();
+  const [c, setC] = useState({ clientId: "", clientSecret: "" });
+  const save = useAction(() => api.post("/integrations/youtube/client", c), { success: "OAuth client saved (encrypted)", invalidate: [["integrations"]], onSuccess: () => setC({ clientId: "", clientSecret: "" }) });
+  const connect = useAction(() => api.post("/integrations/youtube/connect", { brandId }), {
+    onSuccess: (r) => {
+      window.open(r.authUrl, "_blank", "noopener");
+    },
+    success: "Opened Google sign-in in your browser — approve read-only access, then come back here.",
+  });
+  if (status === "needs_credentials" || status === "disconnected")
+    return (
+      <div className="grid g3" style={{ marginTop: 10 }}>
+        <Field label="OAuth client ID (Desktop app)"><TextInput value={c.clientId} onChange={(v) => setC({ ...c, clientId: v })} placeholder="…apps.googleusercontent.com" /></Field>
+        <Field label="Client secret"><input type="password" autoComplete="off" value={c.clientSecret} onChange={(e) => setC({ ...c, clientSecret: e.target.value })} /></Field>
+        <div style={{ alignSelf: "end" }}><Button kind="primary" onClick={() => save.mutate()} disabled={!c.clientId} busy={save.isPending}>Save client</Button></div>
+      </div>
+    );
+  if (status === "needs_oauth") return <div style={{ marginTop: 10 }}><Button kind="primary" onClick={() => connect.mutate()} busy={connect.isPending}>Connect YouTube (read-only)</Button></div>;
+  return <p className="faint" style={{ marginTop: 6 }}>Sync analytics from Analytics Lab → Import data.</p>;
 }

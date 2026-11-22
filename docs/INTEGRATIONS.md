@@ -8,7 +8,7 @@ Last reviewed: **2026-11-22**. Platform rules change: re-check the official docs
 | Claude web search | Implemented (server tool `web_search_20260209`, bounded by `maxWebSearchesPerRun`). | Sources saved with URL, title, page age, cited text. Requires web search enabled for your Anthropic org. |
 | Public page import | Implemented, no setup. | SSRF-safe fetch of a public URL → dated source with excerpt. |
 | Manual hand-off | Implemented. | Markdown package, copy, CSV/ICS calendar export, “mark published” with URL. |
-| YouTube Data/Analytics API | **Boundary only** (`needs_credentials` / `not_implemented`). | Use YouTube Studio CSV export → Analytics import (headers auto-mapped). |
+| YouTube Analytics (read-only) | **Implemented**: OAuth 2.0 + PKCE (Desktop-app client, loopback redirect), encrypted tokens, refresh, revoke, per-video sync, 30-day retention. **Not verified against a live Google account** (needs your OAuth client). Uploads are deliberately not built. | Settings → paste client → Connect → Analytics Lab → Sync YouTube. CSV import still works. |
 | TikTok Content Posting API | `needs_provider_approval` | Hand-off only. |
 | Instagram/Facebook (Meta Graph) | `needs_provider_approval` | CSV import + hand-off. |
 | LinkedIn | `needs_provider_approval` | Hand-off only. |
@@ -20,14 +20,17 @@ Last reviewed: **2026-11-22**. Platform rules change: re-check the official docs
 3. Optional: `CSA_MODEL_STRONG` (default `claude-opus-5-5`), `CSA_MODEL_FAST` (default `claude-haiku-5-5`).
 4. Costs are estimated from list prices in `src/server/providers/model/pricing.ts` (Opus 5.5 $4/$20, Haiku 5.5 $0.10/$0.50 per MTok, web search $10/1k). Per-run and monthly caps are in Settings.
 
-## YouTube (next connector — checklist)
-Official docs: Analytics API https://developers.google.com/youtube/analytics · data model https://developers.google.com/youtube/analytics/data_model · upload https://developers.google.com/youtube/v3/docs/videos/insert · policies https://developers.google.com/youtube/terms/developer-policies
+## YouTube (read-only analytics)
+Setup (about 10 minutes, no Google review needed for your own channel):
+1. https://console.cloud.google.com → new project → APIs & Services → enable **YouTube Analytics API** and **YouTube Data API v3**.
+2. OAuth consent screen → External → add your Google account under **Test users**.
+3. Credentials → Create credentials → OAuth client ID → **Application type: Desktop app**. (Desktop clients accept loopback redirects on any port, which the desktop app needs because it picks a free port.)
+4. Throughline → Settings → Integrations → YouTube → paste client ID + secret → **Connect YouTube (read-only)** → approve in the browser.
+5. Analytics Lab → Import data → **Sync YouTube**.
 
-1. Google Cloud project; enable YouTube Data API v3 + YouTube Analytics API; OAuth consent screen with yourself as test user.
-2. OAuth client (Web) with redirect `http://127.0.0.1:8787/api/integrations/youtube/callback`; set `YOUTUBE_OAUTH_CLIENT_ID` / `YOUTUBE_OAUTH_CLIENT_SECRET`.
-3. Read-only scopes first: `yt-analytics.readonly`, `youtube.readonly`. Upload (`youtube.upload`) only after the read path works.
-4. Policy constraints to implement: refresh/delete stored API data within the policy windows (30-day limits for certain data); delete on revoke; no audiovisual download; no engagement automation; user-selected privacy on upload; unverified projects' uploads may be locked private until Google audit.
-5. Store imports with `analytics_imports.source = 'api:youtube'` so disconnect deletes them.
+What the code does: scopes `yt-analytics.readonly` + `youtube.readonly` only; refuses to store tokens if either scope is missing; requests `dimensions=video`, `sort=-views`, up to 200 videos with views, estimatedMinutesWatched, averageViewDuration, averageViewPercentage, likes, comments, shares, subscribersGained; looks up titles/durations (≤3 min → Shorts) via the Data API in batches of 50. Each sync replaces the previous API import (source `api:youtube`). API data older than 30 days is deleted at startup and before analysis; disconnect revokes the token at Google and deletes tokens and API data.
+
+**Verification status (2026-11-22):** the endpoints (`accounts.google.com/o/oauth2/v2/auth`, `oauth2.googleapis.com/token|revoke`, `youtubeanalytics.googleapis.com/v2/reports`, `www.googleapis.com/youtube/v3/videos|channels`), scopes and metric names follow Google's published documentation as known to the author, but `developers.google.com` was unreachable from the build environment, so they were **not re-fetched today**. Re-check: OAuth native apps https://developers.google.com/identity/protocols/oauth2/native-app · reports.query https://developers.google.com/youtube/analytics/reference/reports/query · policies https://developers.google.com/youtube/terms/developer-policies. Flow tested against a mocked Google (PKCE, state single-use, refresh, revoke, retention).
 
 ## TikTok
 Direct Post requires a registered app, approved `video.publish`, creator-info query, explicit consent UI; unaudited clients may only post privately. Do not show public auto-publish as available until audited. Docs: https://developers.tiktok.com/doc/content-posting-api-get-started

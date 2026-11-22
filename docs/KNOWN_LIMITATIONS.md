@@ -7,7 +7,7 @@ Updated 2026-11-22. Nothing below is hidden in the UI — statuses are labelled 
 - Structured-output schemas use `z.number().min/max`; if the API's JSON-schema subset rejects a constraint, the SDK helper normally strips it — if a 400 occurs, relax the constraint in `src/shared/schemas.ts`.
 
 ## Not built yet
-- **Live platform connectors** (YouTube OAuth/analytics sync/upload, TikTok, Meta, LinkedIn, Buffer/Postiz). The connector interface, honest status registry, and the full publish gate (kill switch, approval binding, preview-hash confirmation, idempotency, ambiguous-outcome check, audit) exist and are tested with a mock connector. Use CSV import + manual hand-off meanwhile.
+- **YouTube** read-only analytics is implemented but untested against a real Google account; YouTube **upload** is not built (videos aren't stored by the app). **Other live connectors** (TikTok, Meta, LinkedIn, Buffer/Postiz) need provider approval. The connector interface, honest status registry, and the full publish gate (kill switch, approval binding, preview-hash confirmation, idempotency, ambiguous-outcome check, audit) exist and are tested with a mock connector. Use CSV import + manual hand-off meanwhile.
 - **Per-channel automatic publishing** policies (the setting exists but nothing auto-publishes; every post needs a human confirmation).
 - **Scheduled background jobs** (e.g. weekly summary, timed publishing): there is no scheduler; the Command Center computes the summary on view.
 - **Embeddings/vector retrieval**: Brand Brain uses SQLite FTS5 (BM25). `services/brain.ts#retrieve` is the seam to add vectors.
