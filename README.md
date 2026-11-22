@@ -9,6 +9,20 @@ research → evidence audit → strategy → ideas → briefs → platform-nativ
 - **Works without any API key**: an explicit offline scaffold engine builds structures from your own data. Add a Claude key for researched, synthesised work.
 - **Local-first**: one SQLite file on your machine.
 
+## Windows desktop app
+Download **Throughline Setup x.y.z.exe** (installer) or **Throughline-x.y.z-win.zip** (portable) from the repository's **Actions → Windows desktop build** artifacts, or from a GitHub Release when a `v*` tag is pushed. The installer is unsigned, so Windows SmartScreen may warn: choose *More info → Run anyway*.
+- Data lives in `%APPDATA%\Throughline\` (database, encrypted-key file, backups). **File → Open data folder** and **File → Back up database…** are in the menu.
+- To use Claude, paste your key in **Settings → Integrations**, or put `ANTHROPIC_API_KEY=...` in `%APPDATA%\Throughline\.env`.
+- You get a desktop notification when an agent run is waiting for your approval.
+- To build it yourself on Windows, run `npm ci` then `npm run dist:win`. The output goes to `release\`. `npm run desktop` runs it without packaging.
+
+## Use Throughline from Claude Desktop / Claude Code (MCP)
+With the app running, add this to Claude Desktop's `claude_desktop_config.json` (adjust the path):
+```json
+{ "mcpServers": { "throughline": { "command": "node", "args": ["C:\\path\\to\\throughline\\dist\\server\\mcp\\server.js"] } } }
+```
+It finds the desktop app automatically (via `%APPDATA%\Throughline\runtime.json`), or set `THROUGHLINE_URL=http://127.0.0.1:8787`. Tools include list_brands, command_center, get_brand, search_brand_docs, list_evidence, list_ideas, list_content, get_content, get_analytics, get_run, add_evidence, add_idea and run_task. There are **no** approve, publish or delete tools: those stay with you in the app.
+
 ## Requirements
 - **Node.js 22.13 or newer** (uses the built-in `node:sqlite`, so there are no native build tools to install). Check with `node -v`.
 - Windows 10/11, macOS or Linux.

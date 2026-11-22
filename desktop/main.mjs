@@ -1,7 +1,7 @@
 // Throughline for Windows (and macOS/Linux): an Electron shell around the same local server.
 // The API binds to 127.0.0.1 on a random free port; data lives in the user's AppData folder.
 import { app, BrowserWindow, Menu, shell, dialog, Notification } from "electron";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -28,6 +28,8 @@ async function boot() {
   const { startServer } = await import(pathToFileURL(join(root, "dist/server/server/server.js")).href);
   const config = { ...loadConfig({ ...process.env, CSA_DB_PATH: join(dataDir, "throughline.sqlite") }), host: "127.0.0.1", port: 0 };
   server = await startServer(config, { clientDir: join(root, "dist/client") });
+  // Lets the Throughline MCP server (Claude Desktop/Code) find this instance's random port.
+  writeFileSync(join(dataDir, "runtime.json"), JSON.stringify({ url: server.url, pid: process.pid }));
   createWindow(server.url);
 }
 
@@ -130,5 +132,10 @@ app.whenReady().then(async () => {
 });
 app.on("window-all-closed", () => app.quit());
 app.on("before-quit", () => {
+  try {
+    unlinkSync(join(app.getPath("userData"), "runtime.json"));
+  } catch {
+    /* already gone */
+  }
   server?.close();
 });

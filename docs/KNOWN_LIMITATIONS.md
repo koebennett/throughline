@@ -12,8 +12,8 @@ Updated 2026-11-22. Nothing below is hidden in the UI — statuses are labelled 
 - **Scheduled background jobs** (e.g. weekly summary, timed publishing): there is no scheduler; the Command Center computes the summary on view.
 - **Embeddings/vector retrieval**: Brand Brain uses SQLite FTS5 (BM25). `services/brain.ts#retrieve` is the seam to add vectors.
 - **Media processing**: video/audio files are recorded as metadata only (bytes not stored, no transcription, no clip rendering). Paste or upload transcripts (.txt/.srt/.vtt). Edit clips from your original files.
-- **MCP server** exposing Throughline tools to Claude Desktop/Code (Phase 5).
-- **Notifications** (email/push) — preferences are stored but nothing is sent.
+- **Email/push notifications**: the desktop app shows native notifications when an agent run awaits approval; nothing is emailed.
+- **Windows installer** is built by GitHub Actions on a Windows runner (the build container's Wine was broken); it is unsigned (SmartScreen warning). The portable zip was built and the identical packaging was launch-tested on Linux, but neither was executed on Windows by the author.
 - **Multi-user / hosted mode**: single user, no login; the API trusts any local caller on 127.0.0.1. Do not expose it on a network. PostgreSQL/auth would be needed for hosting.
 
 ## Behavioural limits

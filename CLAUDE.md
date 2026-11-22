@@ -8,6 +8,7 @@ For ongoing development read `docs/COMPACT_BRIEF.md` (product brief) and `docs/I
 - `npm run check` — typecheck + lint + unit/integration tests + secret scan (run before every commit)
 - `npm run test:e2e` — Playwright (builds, uses throwaway `data/e2e.sqlite`)
 - `npm run db:seed-demo` · `npm run db:backup`
+- `npm run desktop` (Electron) · `npm run dist:win` (Windows installer + zip; CI builds it in `.github/workflows/desktop.yml`) · `npm run mcp`
 
 ## Non-negotiables (enforced in code — keep it that way)
 - Never fabricate metrics, sources, search volume or results. Facts/observations without a source are downgraded to inference (`services/research.ts`).

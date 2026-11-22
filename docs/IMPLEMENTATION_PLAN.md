@@ -30,7 +30,7 @@ Empty repo → chose TypeScript, Hono, Vite/React, node:sqlite (no native deps o
 - [x] CSV template, preview & mapping (YouTube Studio headers auto-mapped), safe parsing with warnings
 - [x] Own-baseline comparison, segments (format/pillar/weekday), insights labelled observation vs hypothesis
 - [x] Postmortems, experiment log, agent narrative with approval before memory updates
-- [ ] YouTube Analytics read-only OAuth (needs Google OAuth client)
+- [x] YouTube Analytics read-only OAuth (PKCE) + sync + retention — awaiting a live test with your Google OAuth client
 
 ### Phase 4 — publishing ⏳
 - [x] Connector interface, honest registry, publish gate (kill switch, approval, preview hash, idempotency, ambiguous check, audit), publish log
@@ -39,11 +39,11 @@ Empty repo → chose TypeScript, Hono, Vite/React, node:sqlite (no native deps o
 ### Phase 5 — advanced ◐
 - [x] Repurposing from owned transcripts with timestamps + lineage map + rights gating
 - [x] Backup CLI, brand export, brand delete, audit log UI, responsive layout, dark mode
-- [ ] MCP server for Claude Desktop/Code (typed safe tools; writes obey approvals)
+- [x] MCP server for Claude Desktop/Code (13 typed tools over the local API; no approve/publish/delete)
+- [x] Windows desktop app (Electron): embedded server, AppData storage, backups, approval notifications; CI builds NSIS + portable
 - [ ] Embeddings behind `retrieve()`; notifications; scheduler for weekly summaries
 
 ## Next highest-value work
 1. Live-key smoke test; tune prompts on real outputs (strategy specificity, idea distinctness).
-2. YouTube read-only OAuth + Analytics sync (store as `source = 'api:youtube'`, honour retention).
-3. MCP server exposing research/brief/plan/review/analyze tools.
-4. Competitor public-pattern capture (manual + provider-backed) feeding differentiation scores.
+2. Live test of YouTube sync with your OAuth client; then consider YouTube upload (needs owned video files).
+3. Competitor public-pattern capture (manual + provider-backed) feeding differentiation scores.
