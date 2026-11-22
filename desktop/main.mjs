@@ -64,7 +64,10 @@ function createWindow(url) {
     win.webContents.once("did-finish-load", () =>
       setTimeout(async () => {
         writeFileSync(shot, (await win.webContents.capturePage()).toPNG());
-        app.quit();
+        // Machine-checkable result: a blank window (e.g. assets failed to load) must fail the smoke test.
+        const text = await win.webContents.executeJavaScript("document.body.innerText");
+        writeFileSync(`${shot}.json`, JSON.stringify({ textLength: text.length, hasApp: /Throughline/.test(text) }));
+        app.exit(text.length > 50 ? 0 : 3);
       }, 2500),
     );
 }

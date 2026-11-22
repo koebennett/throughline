@@ -1,11 +1,12 @@
 // Reusable server start: used by the CLI entry (index.ts) and the Windows desktop app (desktop/main.mjs).
 import { serve, type ServerType } from "@hono/node-server";
-import { serveStatic } from "@hono/node-server/serve-static";
 import { existsSync, readFileSync } from "node:fs";
-import { relative, resolve } from "node:path";
+import { resolve } from "node:path";
 import { bootstrap } from "./bootstrap.js";
 import type { Config } from "./config.js";
 import { log } from "./lib/log.js";
+
+const MIME: Record<string, string> = { js: "text/javascript; charset=utf-8", css: "text/css; charset=utf-8", svg: "image/svg+xml", png: "image/png", woff: "font/woff", woff2: "font/woff2", ico: "image/x-icon", map: "application/json" };
 
 export interface StartOptions {
   /** Directory containing the built UI (index.html + assets/). */
@@ -31,8 +32,22 @@ export function startServer(config: Config, opts: StartOptions = {}): Promise<Ru
       c.header("X-Frame-Options", "DENY");
       c.header("Referrer-Policy", "no-referrer");
     });
-    // serveStatic resolves `root` against the process cwd, so pass a cwd-relative path.
-    app.use("/assets/*", serveStatic({ root: relative(process.cwd(), clientDir) || "." }));
+    // Serve hashed build assets from the absolute client dir. Uses plain fs so it also works inside
+    // Electron's app.asar (serveStatic resolves against the cwd and cannot reach into the archive).
+    const assetsDir = resolve(clientDir, "assets");
+    const cache = new Map<string, Buffer>();
+    app.get("/assets/:name", (c) => {
+      const name = c.req.param("name");
+      if (!/^[\w.-]+\.(js|css|svg|png|woff2?|ico|map)$/.test(name) || name.includes("..")) return c.notFound();
+      let body = cache.get(name);
+      if (!body) {
+        const file = resolve(assetsDir, name);
+        if (!file.startsWith(assetsDir) || !existsSync(file)) return c.notFound();
+        body = readFileSync(file);
+        cache.set(name, body);
+      }
+      return c.body(new Uint8Array(body), 200, { "Content-Type": MIME[name.split(".").pop()!] ?? "application/octet-stream", "Cache-Control": "public, max-age=31536000, immutable" });
+    });
     app.get("*", (c) => (c.req.path.startsWith("/api/") ? c.notFound() : c.html(indexHtml)));
   }
   return new Promise((resolveStart, reject) => {

@@ -10,11 +10,11 @@ research → evidence audit → strategy → ideas → briefs → platform-nativ
 - **Local-first**: one SQLite file on your machine.
 
 ## Windows desktop app
-Download **Throughline Setup x.y.z.exe** (installer) or **Throughline-x.y.z-win.zip** (portable) from the repository's **Actions → Windows desktop build** artifacts, or from a GitHub Release when a `v*` tag is pushed. The installer is unsigned, so Windows SmartScreen may warn: choose *More info → Run anyway*.
+Download **`Throughline-x.y.z-portable.exe`** from the repository's **Releases** page and double-click it. It's a single self-contained file with nothing to install. An installer (`Throughline-x.y.z-setup.exe`, adds Start-menu and desktop shortcuts) is also built there. Both are unsigned, so Windows SmartScreen may warn: choose *More info → Run anyway*. The portable app unpacks itself to a temp folder on each launch, so the first start takes a few seconds.
 - Data lives in `%APPDATA%\Throughline\` (database, encrypted-key file, backups). **File → Open data folder** and **File → Back up database…** are in the menu.
 - To use Claude, paste your key in **Settings → Integrations**, or put `ANTHROPIC_API_KEY=...` in `%APPDATA%\Throughline\.env`.
 - You get a desktop notification when an agent run is waiting for your approval.
-- To build it yourself on Windows, run `npm ci` then `npm run dist:win`. The output goes to `release\`. `npm run desktop` runs it without packaging.
+- To build it yourself, run `npm ci` then `npm run dist:win` (portable + installer). On Linux, `npm run dist:win-portable` builds just the portable exe. The output goes to `release\`. `npm run desktop` runs it without packaging.
 
 ## Use Throughline from Claude Desktop / Claude Code (MCP)
 With the app running, add this to Claude Desktop's `claude_desktop_config.json` (adjust the path):

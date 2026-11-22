@@ -27,7 +27,7 @@
     "desktop": "npm run build && electron .",
     "dist:win": "npm run build && electron-builder --win --x64",
     "dist:dir": "npm run build && electron-builder --dir",
-    "dist:win-portable": "npm run build && electron-builder --win zip --x64",
+    "dist:win-portable": "npm run build && electron-builder --win portable --x64",
     "mcp": "node dist/server/mcp/server.js"
   },
   "dependencies": {
@@ -78,13 +78,13 @@
     "win": {
       "target": [
         {
-          "target": "nsis",
+          "target": "portable",
           "arch": [
             "x64"
           ]
         },
         {
-          "target": "zip",
+          "target": "nsis",
           "arch": [
             "x64"
           ]
@@ -98,7 +98,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "shortcutName": "Throughline",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Throughline-${version}-setup.exe"
     },
     "linux": {
       "target": [
@@ -113,6 +114,9 @@
       ],
       "icon": "desktop/icon.png",
       "category": "public.app-category.productivity"
+    },
+    "portable": {
+      "artifactName": "Throughline-${version}-portable.exe"
     }
   }
 }

@@ -13,7 +13,7 @@ Updated 2026-11-22. Nothing below is hidden in the UI — statuses are labelled 
 - **Embeddings/vector retrieval**: Brand Brain uses SQLite FTS5 (BM25). `services/brain.ts#retrieve` is the seam to add vectors.
 - **Media processing**: video/audio files are recorded as metadata only (bytes not stored, no transcription, no clip rendering). Paste or upload transcripts (.txt/.srt/.vtt). Edit clips from your original files.
 - **Email/push notifications**: the desktop app shows native notifications when an agent run awaits approval; nothing is emailed.
-- **Windows installer** is built by GitHub Actions on a Windows runner (the build container's Wine was broken); it is unsigned (SmartScreen warning). The portable zip was built and the identical packaging was launch-tested on Linux, but neither was executed on Windows by the author.
+- **Windows app**: the portable `.exe` was built, and its exact app payload was launch- and function-tested (UI renders, demo pipeline, exports) under Electron on Linux. It has not been run on a Windows PC by the author. It is unsigned (SmartScreen warning). The NSIS installer is built by GitHub Actions on a Windows runner because Wine crashes in the build container.
 - **Multi-user / hosted mode**: single user, no login; the API trusts any local caller on 127.0.0.1. Do not expose it on a network. PostgreSQL/auth would be needed for hosting.
 
 ## Behavioural limits
