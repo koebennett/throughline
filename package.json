@@ -2,7 +2,7 @@
   "name": "throughline",
   "version": "0.1.0",
   "private": true,
-  "description": "Throughline — an evidence-led content strategy agent and operating system.",
+  "description": "Throughline \u2014 an evidence-led content strategy agent and operating system.",
   "type": "module",
   "engines": {
     "node": ">=22.13.0"
@@ -18,10 +18,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test --trace off",
-    "check": "npm run typecheck && npm run lint && npm test",
+    "check": "npm run typecheck && npm run lint && npm test && npm run check:secrets",
     "db:migrate": "tsx src/server/db/cli.ts migrate",
     "db:seed-demo": "tsx src/server/db/cli.ts seed-demo",
-    "db:backup": "tsx src/server/db/cli.ts backup"
+    "db:backup": "tsx src/server/db/cli.ts backup",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",
