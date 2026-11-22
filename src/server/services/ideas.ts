@@ -56,11 +56,23 @@ export function getIdea(db: Db, id: string, settings: Settings) {
 export function listIdeas(db: Db, brandId: string, settings: Settings, f: { status?: string; pillarId?: string; platform?: string; seriesId?: string } = {}) {
   const where = ["i.brand_id = ?"];
   const p: string[] = [brandId];
-  if (f.status) (where.push("i.status = ?"), p.push(f.status));
+  if (f.status) {
+    where.push("i.status = ?");
+    p.push(f.status);
+  }
   else where.push("i.status != 'ARCHIVED'");
-  if (f.pillarId) (where.push("i.pillar_id = ?"), p.push(f.pillarId));
-  if (f.platform) (where.push("i.platform = ?"), p.push(f.platform));
-  if (f.seriesId) (where.push("i.series_id = ?"), p.push(f.seriesId));
+  if (f.pillarId) {
+    where.push("i.pillar_id = ?");
+    p.push(f.pillarId);
+  }
+  if (f.platform) {
+    where.push("i.platform = ?");
+    p.push(f.platform);
+  }
+  if (f.seriesId) {
+    where.push("i.series_id = ?");
+    p.push(f.seriesId);
+  }
   return db
     .all(
       `SELECT i.*, p.name AS pillar_name, s.name AS series_name, d.title AS duplicate_title FROM ideas i LEFT JOIN pillars p ON p.id = i.pillar_id LEFT JOIN series s ON s.id = i.series_id LEFT JOIN ideas d ON d.id = i.duplicate_of

@@ -103,8 +103,13 @@ export function importCsv(db: Db, brandId: string, input: { filename: string; te
       let published = iPub >= 0 ? (r[iPub] ?? "").trim() : "";
       if (published) {
         const d = new Date(published);
-        if (isNaN(d.getTime())) (warn(`Row ${line}: unrecognised date "${published.slice(0, 30)}".`), (published = ""));
-        else (published = d.toISOString()), dates.push(published);
+        if (isNaN(d.getTime())) {
+          warn(`Row ${line}: unrecognised date "${published.slice(0, 30)}".`);
+          published = "";
+        } else {
+          published = d.toISOString();
+          dates.push(published);
+        }
       }
       const url = iUrl >= 0 ? (r[iUrl] ?? "").trim().slice(0, 2000) : "";
       const match = content.find((c) => (url && c.published_url === url) || (title && similarity(c.title, title) > 0.85));
@@ -141,7 +146,6 @@ export const median = (xs: number[]) => {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
 const PRIMARY_ORDER = ["views", "impressions", "reach", "watch_time_minutes", "likes"];
-const SECONDARY = ["avg_percent_viewed", "avg_view_duration_seconds", "ctr_percent", "saves", "shares", "comments", "link_clicks", "followers_gained", "conversions"];
 
 export interface PostAnalysis {
   id: string;

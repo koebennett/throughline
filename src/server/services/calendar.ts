@@ -45,11 +45,26 @@ export function getEntry(db: Db, id: string) {
 export function listEntries(db: Db, brandId: string, f: { from?: string; to?: string; platform?: string; status?: string; campaignId?: string } = {}) {
   const where = ["e.brand_id = ?"];
   const p: string[] = [brandId];
-  if (f.from) (where.push("e.scheduled_at >= ?"), p.push(f.from));
-  if (f.to) (where.push("e.scheduled_at < ?"), p.push(f.to));
-  if (f.platform) (where.push("e.platform = ?"), p.push(f.platform));
-  if (f.status) (where.push("c.status = ?"), p.push(f.status));
-  if (f.campaignId) (where.push("c.campaign_id = ?"), p.push(f.campaignId));
+  if (f.from) {
+    where.push("e.scheduled_at >= ?");
+    p.push(f.from);
+  }
+  if (f.to) {
+    where.push("e.scheduled_at < ?");
+    p.push(f.to);
+  }
+  if (f.platform) {
+    where.push("e.platform = ?");
+    p.push(f.platform);
+  }
+  if (f.status) {
+    where.push("c.status = ?");
+    p.push(f.status);
+  }
+  if (f.campaignId) {
+    where.push("c.campaign_id = ?");
+    p.push(f.campaignId);
+  }
   return dtos(
     db.all(
       `SELECT e.*, c.status AS content_status, c.format AS content_format, c.campaign_id, i.pillar_id, p.name AS pillar_name,

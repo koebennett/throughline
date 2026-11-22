@@ -19,7 +19,7 @@ describe("csv", () => {
 describe("ics", () => {
   it("escapes and emits events", () => {
     const ics = toIcs("Cal", [{ uid: "1", start: "2026-12-01T10:00:00Z", summary: "A, B; C" }]);
-    expect(ics).toContain("SUMMARY:A\\, B\; C");
+    expect(ics).toContain("SUMMARY:A\\, B\\; C");
     expect(ics).toContain("DTSTART:20261201T100000Z");
   });
 });

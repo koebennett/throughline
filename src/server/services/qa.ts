@@ -131,7 +131,10 @@ export function runQaRules(input: QaInput): { checks: QaCheck[]; dims: Partial<R
   let dupOf = "";
   for (const c of input.library) {
     const s = similarity(body, c.text);
-    if (s > maxSim) (maxSim = s), (dupOf = c.text);
+    if (s > maxSim) {
+      maxSim = s;
+      dupOf = c.text;
+    }
   }
   if (maxSim >= 0.85) add({ id: "originality", label: "Not a near-duplicate", status: "block", message: `Near-duplicate (${Math.round(maxSim * 100)}% similar) of existing content: “${truncate(dupOf, 80)}”.`, fix: "Add a distinct insight, story, example or angle — or archive one of them." });
   else if (maxSim >= 0.6) add({ id: "originality", label: "Not a near-duplicate", status: "warn", message: `Overlaps heavily (${Math.round(maxSim * 100)}%) with existing content.`, fix: "Make the unique angle explicit and change examples." });

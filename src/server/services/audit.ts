@@ -30,8 +30,14 @@ export function audit(db: Db, e: AuditInput) {
 export function listAudit(db: Db, filter: { brandId?: string; entityId?: string; limit?: number }) {
   const where: string[] = [];
   const params: string[] = [];
-  if (filter.brandId) (where.push("brand_id = ?"), params.push(filter.brandId));
-  if (filter.entityId) (where.push("entity_id = ?"), params.push(filter.entityId));
+  if (filter.brandId) {
+    where.push("brand_id = ?");
+    params.push(filter.brandId);
+  }
+  if (filter.entityId) {
+    where.push("entity_id = ?");
+    params.push(filter.entityId);
+  }
   const rows = db.all(
     `SELECT * FROM audit_events ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY created_at DESC, rowid DESC LIMIT ${Math.min(filter.limit ?? 200, 1000)}`,
     ...params,

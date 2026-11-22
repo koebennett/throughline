@@ -99,7 +99,10 @@ export const researchTask: TaskDef<z.infer<typeof ResearchIn>, ResearchState> = 
         // Also include relevant sources already on file.
         for (const s of listSources(sc.ctx.db, sc.brandId)) {
           if (sc.state.sources.length >= 20 || seen.has(s.url || s.id)) continue;
-          if (similarity(`${s.title} ${s.excerpt.slice(0, 500)}`, sc.input.topic) > 0.12) (sc.state.sources.push({ id: s.id, url: s.url, title: s.title, publishedAt: s.publishedAt, excerpt: s.excerpt }), seen.add(s.url || s.id));
+          if (similarity(`${s.title} ${s.excerpt.slice(0, 500)}`, sc.input.topic) > 0.12) {
+            sc.state.sources.push({ id: s.id, url: s.url, title: s.title, publishedAt: s.publishedAt, excerpt: s.excerpt });
+            seen.add(s.url || s.id);
+          }
         }
         pushSummary(sc.state, "gather", `${sc.state.sources.length} source(s) gathered${useWeb ? " (incl. web search)" : ""}.`);
         if (!sc.state.sources.length) sc.note("No sources available. Add URLs or manual sources; synthesis will be limited to hypotheses.");

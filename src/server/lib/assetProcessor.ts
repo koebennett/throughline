@@ -19,7 +19,7 @@ export function ingestFile(filename: string, bytes: Uint8Array): Ingested {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   if (TEXT_EXT.includes(ext)) {
     if (bytes.byteLength > MAX_TEXT_BYTES) throw new Error("Text files must be 5 MB or smaller.");
-    const raw = new TextDecoder("utf-8", { fatal: false }).decode(bytes).replace(/\u0000/g, "");
+    const raw = new TextDecoder("utf-8", { fatal: false }).decode(bytes).split("\u0000").join("");
     if (ext === "srt" || ext === "vtt") return { kind: "transcript", text: subtitlesToText(raw), note: "Subtitle cues converted to timestamped text." };
     return { kind: /transcript|captions?/i.test(name) ? "transcript" : "document", text: raw, note: "" };
   }

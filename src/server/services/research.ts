@@ -96,8 +96,14 @@ export function getEvidence(db: Db, id: string) {
 export function listEvidence(db: Db, brandId: string, opts: { researchRunId?: string; topic?: string } = {}) {
   const where = ["e.brand_id = ?"];
   const p: string[] = [brandId];
-  if (opts.researchRunId) (where.push("e.research_run_id = ?"), p.push(opts.researchRunId));
-  if (opts.topic) (where.push("e.topic LIKE ?"), p.push(`%${opts.topic}%`));
+  if (opts.researchRunId) {
+    where.push("e.research_run_id = ?");
+    p.push(opts.researchRunId);
+  }
+  if (opts.topic) {
+    where.push("e.topic LIKE ?");
+    p.push(`%${opts.topic}%`);
+  }
   return dtos(
     db.all(
       `SELECT e.*, s.url AS source_url, s.title AS source_title, s.publisher AS source_publisher, s.published_at AS source_published_at, s.retrieved_at AS source_retrieved_at

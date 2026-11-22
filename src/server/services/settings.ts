@@ -30,7 +30,7 @@ export function getSettings(db: Db): Settings {
 export function updateSettings(db: Db, patch: Partial<Settings>): Settings {
   const merged = Settings.parse({ ...getSettings(db), ...patch });
   db.tx(() => {
-    for (const [k, v] of Object.entries(patch)) {
+    for (const k of Object.keys(patch)) {
       if (!(k in Settings.shape)) continue;
       db.run(
         "INSERT INTO settings (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at",

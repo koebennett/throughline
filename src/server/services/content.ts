@@ -139,9 +139,18 @@ export function getContentItem(db: Db, id: string) {
 export function listContent(db: Db, brandId: string, f: { status?: string; platform?: string; campaignId?: string } = {}) {
   const where = ["c.brand_id = ?"];
   const p: string[] = [brandId];
-  if (f.status) (where.push("c.status = ?"), p.push(f.status));
-  if (f.platform) (where.push("c.platform = ?"), p.push(f.platform));
-  if (f.campaignId) (where.push("c.campaign_id = ?"), p.push(f.campaignId));
+  if (f.status) {
+    where.push("c.status = ?");
+    p.push(f.status);
+  }
+  if (f.platform) {
+    where.push("c.platform = ?");
+    p.push(f.platform);
+  }
+  if (f.campaignId) {
+    where.push("c.campaign_id = ?");
+    p.push(f.campaignId);
+  }
   return dtos(
     db.all(
       `SELECT c.*, (SELECT count(*) FROM content_variants v WHERE v.content_item_id = c.id) AS variant_count,

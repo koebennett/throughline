@@ -36,7 +36,9 @@ export function makeApp(model?: ModelProvider) {
     let json: any = text;
     try {
       json = JSON.parse(text);
-    } catch {}
+    } catch {
+      /* non-JSON body (csv/ics) */
+    }
     return { status: res.status, body: json, headers: res.headers };
   };
   return { ...boot, call };
