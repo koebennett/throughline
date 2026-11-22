@@ -39,8 +39,9 @@ export function listAudit(db: Db, filter: { brandId?: string; entityId?: string;
     params.push(filter.entityId);
   }
   const rows = db.all(
-    `SELECT * FROM audit_events ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY created_at DESC, rowid DESC LIMIT ${Math.min(filter.limit ?? 200, 1000)}`,
+    `SELECT * FROM audit_events ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY created_at DESC, rowid DESC LIMIT ?`,
     ...params,
+    Math.min(1000, Math.max(1, Number.isFinite(filter.limit) ? Math.trunc(filter.limit!) : 200)),
   );
   return rows.map((r) => ({ ...r, detail: parseJson(r.detail_json, {}) }));
 }

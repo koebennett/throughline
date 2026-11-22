@@ -68,3 +68,12 @@ workspaces, brands, brand_profile_versions (profile JSON incl. audience segments
 - Prompt injection: all third-party/user-supplied text is wrapped in `<untrusted>` fences; the system prompt instructs models to treat it as data. Safety-critical actions never depend on model output.
 - XSS: React escaping only; no `dangerouslySetInnerHTML`. CSV export neutralises formula injection.
 - Deletion: brand delete removes all brand rows (incl. its audit history, via a scoped purge flag) and records one workspace-level deletion event.
+
+## Security review log
+**2026-11-22**, an independent read-only review. All findings were fixed, each with a regression test:
+1. The publish gate accepted a stale approval after "changes requested" or archive. Approval is now valid only if it is the latest decision, it covers the current variant, and the item is APPROVED/SCHEDULED. Idempotent repeats return the existing job before any gate or provider call.
+2. The SSRF filter could be bypassed with IPv6-mapped/compatible/6to4/site-local literals. These are now classified on fully expanded addresses, and the connected `remoteAddress` is re-checked. Fetches also have a total deadline in addition to the idle timeout.
+3. Hostile HTML could cause quadratic regex time on page import. Parsing is now linear, using an `indexOf` tag scanner and bounded patterns.
+4. The untrusted-content fence could be broken by nested tags. Tag-like sequences are now neutralised in a single pass that can't be reassembled, labels are sanitised, and source titles/URLs are moved inside the fence.
+5. `javascript:` URLs were accepted. The server now accepts http(s) only (published URL, CSV URL column), and the client renders links only for http(s) (`safeHref`).
+6. Also fixed: audit `limit` validation; lone CR escaping in ICS; the drafting agent no longer marks briefs approved; `secure_delete` is on, the WAL is checkpointed after a brand delete, and the deletion record no longer stores the brand name.

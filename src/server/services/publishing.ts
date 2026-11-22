@@ -49,11 +49,16 @@ export function publishPreview(ctx: Ctx, itemId: string, connectorId: string, pr
 
 export async function publish(ctx: Ctx, itemId: string, input: { connectorId: string; previewHash: string; confirm: boolean; privacy?: PublishPayload["privacy"] }) {
   if (!input.confirm) throw badRequest("Explicit confirmation is required to publish.");
+  const current = getContentItem(ctx.db, itemId);
+  const idemKey = createHash("sha256").update(`${itemId}:${current.currentVariantId}:${input.connectorId}`).digest("hex").slice(0, 40);
+  // Idempotency first: a repeat of an already-succeeded publish returns the existing job and never calls the provider.
+  const done = ctx.db.get("SELECT * FROM publish_jobs WHERE idempotency_key = ? AND status = 'succeeded'", idemKey);
+  if (done) return { job: dto(done), duplicate: true };
   const preview = publishPreview(ctx, itemId, input.connectorId, input.privacy ?? "private");
   if (preview.previewHash !== input.previewHash) throw conflict("The content changed since you reviewed the preview. Review it again before publishing.");
   if (preview.blockers.length) throw forbidden("Publishing is blocked.", preview.blockers);
-  const item = getContentItem(ctx.db, itemId);
-  const key = createHash("sha256").update(`${itemId}:${item.currentVariantId}:${input.connectorId}`).digest("hex").slice(0, 40);
+  const item = current;
+  const key = idemKey;
   const existing = ctx.db.get("SELECT * FROM publish_jobs WHERE idempotency_key = ?", key);
   if (existing) {
     if (existing.status === "succeeded") return { job: dto(existing), duplicate: true };
@@ -87,7 +92,14 @@ function recordOutcome(ctx: Ctx, jobId: string, outcome: PublishOutcome) {
     } else ctx.db.update("publish_jobs", jobId, { status: outcome.kind === "failed" ? "failed" : "ambiguous", last_error: outcome.error.slice(0, 2000), updated_at: now() });
     audit(ctx.db, { brandId: job.brand_id, entityType: "publish_job", entityId: jobId, action: `publish_${outcome.kind}`, detail: outcome.kind === "succeeded" ? { externalId: outcome.externalId, url: outcome.url } : { error: outcome.error } });
   });
-  if (outcome.kind === "succeeded") transition(ctx.db, job.content_item_id, "PUBLISHED", { viaConnector: job.connector, publishedUrl: outcome.url });
+  if (outcome.kind === "succeeded") {
+    try {
+      transition(ctx.db, job.content_item_id, "PUBLISHED", { viaConnector: job.connector, publishedUrl: outcome.url });
+    } catch (e) {
+      // The external post exists; never hide that. Record the inconsistency instead of failing the request.
+      audit(ctx.db, { brandId: job.brand_id, entityType: "publish_job", entityId: jobId, action: "status_sync_failed", detail: { error: (e as Error).message, url: outcome.url } });
+    }
+  }
   return dto(ctx.db.get("SELECT * FROM publish_jobs WHERE id = ?", jobId));
 }
 

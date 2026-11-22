@@ -43,7 +43,7 @@ export function subtitlesToText(raw: string): string {
       continue;
     }
     if (!line.trim() || /^\d+$/.test(line.trim()) || /^WEBVTT/.test(line) || /^NOTE/.test(line)) continue;
-    const text = line.replace(/<[^>]+>/g, "").trim();
+    const text = line.replace(/<[^<>]{0,500}>/g, "").trim();
     if (ts) {
       out.push(`[${ts}] ${text}`);
       ts = "";

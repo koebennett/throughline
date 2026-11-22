@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import { useBrand } from "../context";
-import { Badge, Breakdown, Button, Card, CopyButton, download, Empty, Field, fmtDate, ListInput, Modal, PageHead, QueryView, ScorePill, Select, StatusBadge, TextArea, TextInput, useAction } from "../components/ui";
+import { Badge, Breakdown, Button, Card, CopyButton, download, Empty, Field, fmtDate, ListInput, Modal, PageHead, QueryView, ScorePill, Select, StatusBadge, TextArea, TextInput, useAction, safeHref } from "../components/ui";
 
 const QA_LABELS: Record<string, string> = { audienceValue: "Audience value", originality: "Originality", clarityHook: "Clarity & hook", evidenceAccuracy: "Evidence & accuracy", brandFit: "Brand fit", platformFit: "Platform fit", narrative: "Narrative / usefulness", ctaAlignment: "CTA / objective fit" };
 
@@ -292,7 +292,7 @@ function PlanCard({ item, inv }: { item: any; inv: unknown[][] }) {
           {item.status === "PUBLISHED" && <Button size="sm" onClick={() => transition.mutate({ to: "ANALYZED" })}>Mark analyzed</Button>}
           {item.status !== "ARCHIVED" ? <Button size="sm" kind="danger" onClick={() => transition.mutate({ to: "ARCHIVED" })}>Archive</Button> : <Button size="sm" onClick={() => transition.mutate({ to: "DRAFT" })}>Unarchive</Button>}
         </div>
-        {item.publishedUrl && <a className="small" href={item.publishedUrl} target="_blank" rel="noreferrer noopener">{item.publishedUrl}</a>}
+        {safeHref(item.publishedUrl) && <a className="small" href={safeHref(item.publishedUrl)} target="_blank" rel="noreferrer noopener">{item.publishedUrl}</a>}
       </div>
     </Card>
   );

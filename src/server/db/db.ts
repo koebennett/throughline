@@ -11,7 +11,7 @@ export class Db {
   constructor(readonly path: string) {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.raw = new DatabaseSync(path);
-    this.raw.exec("PRAGMA foreign_keys = ON;");
+    this.raw.exec("PRAGMA foreign_keys = ON; PRAGMA secure_delete = ON;");
     if (path !== ":memory:") this.raw.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;");
   }
 

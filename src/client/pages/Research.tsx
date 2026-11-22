@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import { useBrand } from "../context";
-import { Badge, Button, Card, ConfidenceBadge, Empty, EvidenceBadge, Field, fmtDate, ListInput, Modal, PageHead, QueryView, Select, StatusBadge, TextArea, TextInput, useAction } from "../components/ui";
+import { Badge, Button, Card, ConfidenceBadge, Empty, EvidenceBadge, Field, fmtDate, ListInput, Modal, PageHead, QueryView, Select, StatusBadge, TextArea, TextInput, useAction, safeHref } from "../components/ui";
 import { RunTaskButton } from "../components/agent";
 
 export function ResearchPage() {
@@ -92,7 +92,7 @@ function EvidenceCard({ q, sources, filtered }: { q: any; sources: any[]; filter
                 </div>
                 <p style={{ marginTop: 4 }}>{x.claim}</p>
                 {x.sourceTitle ? (
-                  <div className="faint">Source: {x.sourceUrl ? <a href={x.sourceUrl} target="_blank" rel="noreferrer noopener">{x.sourceTitle}</a> : x.sourceTitle}{x.sourcePublisher && ` — ${x.sourcePublisher}`} · published {x.sourcePublishedAt || "unknown"} · retrieved {fmtDate(x.sourceRetrievedAt)}</div>
+                  <div className="faint">Source: {safeHref(x.sourceUrl) ? <a href={safeHref(x.sourceUrl)} target="_blank" rel="noreferrer noopener">{x.sourceTitle}</a> : x.sourceTitle}{x.sourcePublisher && ` — ${x.sourcePublisher}`} · published {x.sourcePublishedAt || "unknown"} · retrieved {fmtDate(x.sourceRetrievedAt)}</div>
                 ) : <div className="faint">No source attached</div>}
                 {x.auditNote && <div className="small" style={{ color: "var(--warn)" }}>{x.auditNote}</div>}
               </div>
@@ -132,7 +132,7 @@ function SourcesCard({ q }: { q: any }) {
       <QueryView q={q} empty={(d: any[]) => !d.length && <p className="muted">No sources yet.</p>}>
         {(list: any[]) => list.map((s) => (
           <div key={s.id} className="list-item">
-            <div className="row between"><b className="small clamp2" style={{ flex: 1 }}>{s.url ? <a href={s.url} target="_blank" rel="noreferrer noopener">{s.title}</a> : s.title}</b><Button size="sm" kind="ghost" onClick={() => confirm("Delete source? Linked evidence keeps its text but loses the citation.") && del.mutate(s.id)}>✕</Button></div>
+            <div className="row between"><b className="small clamp2" style={{ flex: 1 }}>{safeHref(s.url) ? <a href={safeHref(s.url)} target="_blank" rel="noreferrer noopener">{s.title}</a> : s.title}</b><Button size="sm" kind="ghost" onClick={() => confirm("Delete source? Linked evidence keeps its text but loses the citation.") && del.mutate(s.id)}>✕</Button></div>
             <div className="faint">{s.publisher || "—"} · published {s.publishedAt || "unknown"} · retrieved {fmtDate(s.retrievedAt)} · {s.provider} · {s.evidenceCount} evidence</div>
           </div>
         ))}

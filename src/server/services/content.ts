@@ -269,9 +269,17 @@ export function approve(db: Db, itemId: string, note = "", decision: "approved" 
   return getContentItem(db, itemId);
 }
 
+/**
+ * The approval that currently authorises this item, or null. Valid only if (a) the item is APPROVED/SCHEDULED,
+ * (b) the most recent decision on the item is "approved", and (c) that decision was for the current variant.
+ * A later "changes requested", archive, edit or variant switch therefore voids it.
+ */
 export function currentApproval(db: Db, itemId: string) {
   const item = getContentItem(db, itemId);
-  return db.get("SELECT * FROM approvals WHERE content_item_id = ? AND variant_id = ? AND decision = 'approved' ORDER BY created_at DESC LIMIT 1", itemId, item.currentVariantId ?? "") ?? null;
+  if (!["APPROVED", "SCHEDULED"].includes(item.status) || !item.currentVariantId) return null;
+  const latest = db.get("SELECT * FROM approvals WHERE content_item_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 1", itemId);
+  if (!latest || latest.decision !== "approved" || latest.variant_id !== item.currentVariantId) return null;
+  return latest;
 }
 
 export function transition(db: Db, itemId: string, to: ContentStatus, detail: Record<string, unknown> = {}) {

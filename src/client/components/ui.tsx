@@ -238,6 +238,9 @@ export function ConfidenceBadge({ c }: { c: string }) {
   return <Badge tone={c === "high" ? "good" : c === "medium" ? "info" : "warn"} title="Confidence">{c} conf.</Badge>;
 }
 
+/** Only http(s) links are rendered as hrefs (defence in depth; the server also rejects other schemes). */
+export const safeHref = (u?: string | null) => (u && /^https?:\/\//i.test(u) ? u : undefined);
+
 export function fmtDate(iso?: string | null, withTime = false) {
   if (!iso) return "—";
   const d = new Date(iso);

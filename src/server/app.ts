@@ -226,7 +226,7 @@ export function createApp(ctx: Ctx, engine: WorkflowEngine, opts: { allowAnyHost
     return c.json(content.approve(db, c.req.param("id"), body.note, body.decision));
   });
   app.post("/api/content/:id/transition", async (c) => {
-    const body = await json(c, z.object({ to: z.enum(["IDEA", "RESEARCHED", "BRIEF", "DRAFT", "QA", "REVIEW", "APPROVED", "SCHEDULED", "PUBLISHED", "ANALYZED", "ARCHIVED"]), publishedUrl: z.string().url().max(2000).optional(), scheduledAt: z.string().optional(), note: z.string().max(1000).optional() }));
+    const body = await json(c, z.object({ to: z.enum(["IDEA", "RESEARCHED", "BRIEF", "DRAFT", "QA", "REVIEW", "APPROVED", "SCHEDULED", "PUBLISHED", "ANALYZED", "ARCHIVED"]), publishedUrl: z.string().max(2000).regex(/^https?:\/\/[^\s]+$/i, "Must be an http(s) URL").optional(), scheduledAt: z.string().optional(), note: z.string().max(1000).optional() }));
     return c.json(content.transition(db, c.req.param("id"), body.to, { publishedUrl: body.publishedUrl, scheduledAt: body.scheduledAt, note: body.note }));
   });
   app.get("/api/content/:id/handoff", (c) => c.json(publishing.handoffPackage(ctx, c.req.param("id"))));

@@ -80,6 +80,12 @@ export function deleteBrand(db: Db, id: string) {
     db.run("DELETE FROM audit_events WHERE brand_id = ?", id);
     db.run("DELETE FROM settings WHERE key = '__audit_purge_brand'");
     db.run("DELETE FROM brands WHERE id = ?", id);
-    audit(db, { brandId: null, entityType: "brand", entityId: id, action: "deleted", detail: { name: b.name, demo: b.isDemo } });
+    audit(db, { brandId: null, entityType: "brand", entityId: id, action: "deleted", detail: { demo: b.isDemo } });
   });
+  // Flush deleted pages out of the WAL so removed data doesn't linger on disk.
+  try {
+    db.raw.exec("PRAGMA wal_checkpoint(TRUNCATE);");
+  } catch {
+    /* in-memory DB */
+  }
 }

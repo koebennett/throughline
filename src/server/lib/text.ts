@@ -67,8 +67,10 @@ export function findNearDuplicates(
  * treats it strictly as data. Strips our own fence markers to prevent fence-breaking.
  */
 export function fenceUntrusted(label: string, text: string, maxChars = 12000): string {
-  const clean = text.replace(/<\/?untrusted[^>]*>/gi, "").slice(0, maxChars);
-  return `<untrusted source="${label.replace(/"/g, "'").slice(0, 120)}">\n${clean}\n</untrusted>`;
+  // Neutralise anything resembling our fence tag (no multi-pass reassembly possible: "<" is replaced, not removed).
+  const clean = text.slice(0, maxChars).replace(/<(\s*\/?\s*untrusted)/gi, "‹$1");
+  const safeLabel = label.replace(/[<>"\r\n]/g, " ").slice(0, 120);
+  return `<untrusted source="${safeLabel}">\n${clean}\n</untrusted>`;
 }
 
 export function truncate(s: string, n: number): string {

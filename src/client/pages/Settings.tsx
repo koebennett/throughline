@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import { useBrand } from "../context";
-import { Badge, Button, Card, Field, fmtDate, PageHead, QueryView, StatusBadge, Tabs, TextInput, useAction, useToast } from "../components/ui";
+import { Badge, Button, Card, Field, fmtDate, PageHead, QueryView, StatusBadge, Tabs, TextInput, useAction, useToast, safeHref } from "../components/ui";
 
 type Tab = "integrations" | "agent" | "publishing" | "data" | "audit";
 const QA_LABELS: Record<string, string> = { audienceValue: "Audience value", originality: "Originality", clarityHook: "Clarity & hook", evidenceAccuracy: "Evidence & accuracy", brandFit: "Brand fit", platformFit: "Platform fit", narrative: "Narrative", ctaAlignment: "CTA fit" };
@@ -136,7 +136,7 @@ function Publishing() {
           {(list: any[]) => list.map((j) => (
             <div key={j.id} className="list-item small">
               <div className="row between"><b>{j.title}</b><StatusBadge status={j.status === "ambiguous" ? "interrupted" : j.status} /></div>
-              <div className="faint">{j.connector} · attempts {j.attempts} · {fmtDate(j.updatedAt, true)}{j.resultUrl && <> · <a href={j.resultUrl} target="_blank" rel="noreferrer noopener">post</a></>}</div>
+              <div className="faint">{j.connector} · attempts {j.attempts} · {fmtDate(j.updatedAt, true)}{safeHref(j.resultUrl) && <> · <a href={safeHref(j.resultUrl)} target="_blank" rel="noreferrer noopener">post</a></>}</div>
               {j.lastError && <div style={{ color: "var(--bad)" }}>{j.lastError}</div>}
               {j.status === "ambiguous" && <Button size="sm" onClick={() => check.mutate(j.id)}>Check status with provider</Button>}
             </div>

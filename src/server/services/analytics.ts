@@ -111,7 +111,9 @@ export function importCsv(db: Db, brandId: string, input: { filename: string; te
           dates.push(published);
         }
       }
-      const url = iUrl >= 0 ? (r[iUrl] ?? "").trim().slice(0, 2000) : "";
+      const rawUrl = iUrl >= 0 ? (r[iUrl] ?? "").trim().slice(0, 2000) : "";
+      const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : "";
+      if (rawUrl && !url) warn(`Row ${line}: URL ignored (only http/https links are kept).`);
       const match = content.find((c) => (url && c.published_url === url) || (title && similarity(c.title, title) > 0.85));
       db.insert("analytics_snapshots", {
         id: newId("snap"), brand_id: brandId, import_id: importId, content_item_id: match?.id ?? null, platform: rowPlatform, post_ref: ref.slice(0, 200),

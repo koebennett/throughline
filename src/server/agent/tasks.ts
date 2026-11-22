@@ -113,7 +113,7 @@ export const researchTask: TaskDef<z.infer<typeof ResearchIn>, ResearchState> = 
       label: "Synthesize evidence",
       run: async (sc) => {
         const ctxPack = pack(sc, sc.input.topic, { evidenceLimit: 10, includeAnalytics: false });
-        const list = sc.state.sources.map((s, i) => `[${i}] ${s.title} | ${s.url || "no url"} | published: ${s.publishedAt || "unknown"}\n${fenceUntrusted(`source ${i}`, s.excerpt, 3000)}`).join("\n\n");
+        const list = sc.state.sources.map((s, i) => `[${i}] ${fenceUntrusted(`source ${i}`, `TITLE: ${s.title}\nURL: ${s.url || "none"}\nPUBLISHED: ${s.publishedAt || "unknown"}\n\n${s.excerpt}`, 3500)}`).join("\n\n");
         const res = await sc.generate({
           purpose: "research.synthesis", tier: "strong", system: system("research"),
           prompt: `${ctxPack.text}\n\nRESEARCH TOPIC: ${sc.input.topic}\n${sc.input.question ? `QUESTION: ${sc.input.question}\n` : ""}\nNUMBERED SOURCES:\n${list || "(none)"}`,
@@ -398,7 +398,6 @@ export const draftsTask: TaskDef<z.infer<typeof DraftsIn>, DraftsState> = {
           sc.state.items.push({ contentItemId: item.id, platform: t.platform, format, variantIds });
           sc.note(`${PLATFORM_SPECS[t.platform].label}: ${variantIds.length} variant(s).`);
         }
-        if (sc.ctx.db.get("SELECT status FROM briefs WHERE id = ?", sc.input.briefId)?.status === "draft") sc.ctx.db.update("briefs", sc.input.briefId, { status: "approved" });
       },
     },
     {

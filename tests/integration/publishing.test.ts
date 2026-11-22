@@ -56,8 +56,8 @@ describe("publish gate", () => {
     expect(item).toMatchObject({ status: "PUBLISHED", publishedUrl: "https://linkedin.com/p/1", externalId: "urn:1" });
     // A second attempt does not call the provider again.
     const pv2 = (await t.call("GET", `/api/content/${t.itemId}/publish-preview?connector=linkedin`)).body;
-    expect(pv2.blockers.length).toBe(0);
-    const again = await t.call("POST", `/api/content/${t.itemId}/publish`, { connectorId: "linkedin", previewHash: pv2.previewHash, confirm: true });
+    expect(pv2.canPublish).toBe(false); // already published → no new external write is allowed
+    const again = await t.call("POST", `/api/content/${t.itemId}/publish`, { connectorId: "linkedin", previewHash: pv.previewHash, confirm: true });
     expect(again.body.duplicate).toBe(true);
     expect(calls).toHaveLength(1);
   });
@@ -79,6 +79,26 @@ describe("publish gate", () => {
     expect(retry.body.job.attempts).toBe(2);
     const audit = (await t.call("GET", `/api/audit?entityId=${first.body.job.id}`)).body.map((a: any) => a.action);
     expect(audit).toEqual(expect.arrayContaining(["publish_started", "publish_ambiguous", "status_checked", "publish_succeeded"]));
+  });
+
+  it("voids approval after changes are requested, archive, or switching variants (security review #1)", async () => {
+    const calls = mockConnector([{ kind: "succeeded", externalId: "x", url: "https://linkedin.com/p/x" }]);
+    const t = await approvedItem();
+    updateSettings(t.db, { publishingEnabled: true });
+    const pv = (await t.call("GET", `/api/content/${t.itemId}/publish-preview?connector=linkedin`)).body;
+    expect(pv.canPublish).toBe(true);
+    await t.call("POST", `/api/content/${t.itemId}/approve`, { decision: "changes_requested", note: "fix hook" });
+    const after = (await t.call("GET", `/api/content/${t.itemId}/publish-preview?connector=linkedin`)).body;
+    expect(after.canPublish).toBe(false);
+    expect((await t.call("POST", `/api/content/${t.itemId}/publish`, { connectorId: "linkedin", previewHash: after.previewHash, confirm: true })).status).toBe(403);
+    // Re-approve, then archive → blocked again
+    await t.call("POST", `/api/content/${t.itemId}/qa`, { useModel: false });
+    expect((await t.call("POST", `/api/content/${t.itemId}/approve`, {})).body.status).toBe("APPROVED");
+    await t.call("POST", `/api/content/${t.itemId}/transition`, { to: "ARCHIVED" });
+    expect((await t.call("GET", `/api/content/${t.itemId}/publish-preview?connector=linkedin`)).body.canPublish).toBe(false);
+    expect(calls).toHaveLength(0);
+    // javascript: URLs are refused when marking as published
+    expect((await t.call("POST", `/api/content/${t.itemId}/transition`, { to: "PUBLISHED", publishedUrl: "javascript:alert(1)" })).status).toBe(400);
   });
 
   it("reports honest integration statuses; nothing claims to be connected without config", async () => {

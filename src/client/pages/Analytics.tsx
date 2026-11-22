@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import { useBrand } from "../context";
-import { Badge, Button, Card, ConfidenceBadge, Empty, Field, fmtDate, Modal, PageHead, QueryView, Select, StatusBadge, Tabs, TextArea, TextInput, useAction } from "../components/ui";
+import { Badge, Button, Card, ConfidenceBadge, Empty, Field, fmtDate, Modal, PageHead, QueryView, Select, StatusBadge, Tabs, TextArea, TextInput, useAction, safeHref } from "../components/ui";
 import { RunTaskButton } from "../components/agent";
 
 export function AnalyticsPage() {
@@ -60,7 +60,7 @@ function Results({ brandId, onImport }: { brandId: string; onImport: () => void 
                 <thead><tr><th>Post</th><th>Published</th><th>Format / pillar</th>{metrics.map((m) => <th key={m}>{metricLabel(m)}</th>)}<th>Verdict</th><th /></tr></thead>
                 <tbody>{pl.posts.map((p: any) => (
                   <tr key={p.id}>
-                    <td style={{ maxWidth: 280 }}>{p.url ? <a href={p.url} target="_blank" rel="noreferrer noopener">{p.title}</a> : p.title}{p.contentItemId && <div><Badge tone="accent">linked to library</Badge></div>}</td>
+                    <td style={{ maxWidth: 280 }}>{safeHref(p.url) ? <a href={safeHref(p.url)} target="_blank" rel="noreferrer noopener">{p.title}</a> : p.title}{p.contentItemId && <div><Badge tone="accent">linked to library</Badge></div>}</td>
                     <td className="nowrap faint">{fmtDate(p.publishedAt)}</td>
                     <td>{p.format || "—"}<div className="faint">{p.pillar}</div></td>
                     {metrics.map((m) => <td key={m}>{fmt(p.metrics[m])}{p.vsBaseline[m] != null && <div><Badge tone={ratioTone(p.vsBaseline[m])}>{p.vsBaseline[m]}×</Badge></div>}</td>)}
