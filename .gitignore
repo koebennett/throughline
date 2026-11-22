@@ -12,3 +12,4 @@ playwright-report/
 *.log
 .claude/settings.local.json
 release/
+release-windows/

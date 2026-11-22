@@ -14,6 +14,8 @@ Download **`Throughline-x.y.z-portable.exe`** from the repository's **Releases**
 - Data lives in `%APPDATA%\Throughline\` (database, encrypted-key file, backups). **File → Open data folder** and **File → Back up database…** are in the menu.
 - To use Claude, paste your key in **Settings → Integrations**, or put `ANTHROPIC_API_KEY=...` in `%APPDATA%\Throughline\.env`.
 - You get a desktop notification when an agent run is waiting for your approval.
+- If it won't start, open `%APPDATA%\Throughline\startup.log`. Every launch writes a line there, including the reason for any failure.
+- Easiest option: download **`Throughline-x.y.z-windows.zip`**, right-click → **Extract All**, then double-click **`Throughline.exe`** in the extracted folder. Nothing to install, no terminal, no Node.js needed.
 - To build it yourself, run `npm ci` then `npm run dist:win` (portable + installer). On Linux, `npm run dist:win-portable` builds just the portable exe. The output goes to `release\`. `npm run desktop` runs it without packaging.
 
 ## Use Throughline from Claude Desktop / Claude Code (MCP)
