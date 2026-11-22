@@ -5,6 +5,7 @@ export default defineConfig({
     include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     environment: "node",
     pool: "forks",
+    execArgv: ["--disable-warning=ExperimentalWarning"],
     testTimeout: 20000,
   },
 });

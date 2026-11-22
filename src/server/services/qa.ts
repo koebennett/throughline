@@ -67,7 +67,9 @@ const BAIT = [
   /\bshare (this )?(with|to) (\d+|everyone|10)\b/i,
   /\bfollow for part \d\b/i,
 ];
-const PLACEHOLDER = /\[(verify|fact[- ]?check|citation needed|source|todo|tbd|insert[^\]]*)\]|\{\{[^}]+\}\}|\bTODO\b|\bXX+\b/i;
+const PLACEHOLDER_CI = /\[(verify|fact[- ]?check|citation needed|source|todo|tbd|insert[^\]]*)\]|\{\{[^}]+\}\}/i;
+const PLACEHOLDER_CS = /\bTODO\b|\bXXX+\b|\bTBD\b/; // case-sensitive: "xxx" in normal text is not a marker
+const findPlaceholder = (t: string) => t.match(PLACEHOLDER_CI) ?? t.match(PLACEHOLDER_CS);
 const STAT = /(\b\d{1,3}(\.\d+)?\s?%|\b(studies|research|data|surveys?) (show|shows|found|suggests?)\b|\baccording to\b|\b\d+x (more|faster|better)\b)/i;
 const SPONSOR_SIGNALS = /\b(sponsored by|affiliate|use (my|the) code|discount code|link in (my )?bio to (buy|shop)|paid partnership|commission)\b/i;
 const DISCLOSURE = /(#ad\b|#sponsored|\bsponsored\b|paid partnership|\baffiliate (link|disclosure)|i (may )?earn a (small )?commission|\bad\b:)/i;
@@ -97,7 +99,7 @@ export function runQaRules(input: QaInput): { checks: QaCheck[]; dims: Partial<R
     ? { id: "has_content", label: "Has substantive content", status: "block", message: "The draft has no meaningful body/script/caption.", fix: "Write or generate the main copy." }
     : { id: "has_content", label: "Has substantive content", status: "pass", message: "Main copy present." });
 
-  const placeholder = text.match(PLACEHOLDER);
+  const placeholder = findPlaceholder(text);
   add(placeholder
     ? { id: "no_placeholders", label: "No unresolved placeholders", status: "block", message: `Unresolved marker "${placeholder[0]}" — the draft is not finished.`, fix: "Replace scaffold markers with real, verified content." }
     : { id: "no_placeholders", label: "No unresolved placeholders", status: "pass", message: "No scaffold markers left." });
