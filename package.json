@@ -23,32 +23,94 @@
     "db:seed-demo": "tsx src/server/db/cli.ts seed-demo",
     "db:backup": "tsx src/server/db/cli.ts backup",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "e2e:install": "playwright install chromium"
+    "e2e:install": "playwright install chromium",
+    "desktop": "npm run build && electron .",
+    "dist:win": "npm run build && electron-builder --win --x64",
+    "dist:dir": "npm run build && electron-builder --dir",
+    "dist:win-portable": "npm run build && electron-builder --win zip --x64"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",
     "@hono/node-server": "^2.1.11",
-    "@tanstack/react-query": "^5.108.2",
     "hono": "^4.13.20",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "react-router-dom": "^7.18.6",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
+    "@tanstack/react-query": "^5.108.2",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
     "concurrently": "^10.0.7",
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
     "eslint": "^10.15.0",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.6",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.73.0",
     "vite": "^8.3.8",
     "vitest": "^5.1.1"
+  },
+  "main": "desktop/main.mjs",
+  "productName": "Throughline",
+  "author": "Throughline",
+  "build": {
+    "appId": "app.throughline.desktop",
+    "productName": "Throughline",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "desktop/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Throughline",
+      "deleteAppDataOnUninstall": false
+    },
+    "linux": {
+      "target": [
+        "dir"
+      ],
+      "icon": "desktop/icon.png",
+      "category": "Office"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "desktop/icon.png",
+      "category": "public.app-category.productivity"
+    }
   }
 }
